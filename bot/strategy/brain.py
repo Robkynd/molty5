@@ -298,7 +298,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
         energy_drink = _find_energy_drink(inventory)
         if energy_drink:
             return {"action": "use_item", "data": {"itemId": energy_drink["id"]},
-                    "reason": "EP RECOVERY: EP=0, using energy drink (+5 EP)"}
+                    "reason": "EP RECOVERY: EP=3, using energy drink (+5 EP)"}
 
     # ── Priority 5: Guardian farming (v1.5.2: 120 sMoltz per kill!) ─
     # Only 5 guardians per free room — each worth 120 sMoltz!
@@ -339,7 +339,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
                                      _estimate_enemy_weapon_bonus(target),
                                      defense, region_weather)
             # Fight only if we deal more damage or target is low HP
-            if my_dmg > enemy_dmg or target.get("hp", 100) <= my_dmg * 2:
+            if my_dmg * 0.8 > enemy_dmg or target.get("hp", 100) <= my_dmg * 1.52:
                 return {"action": "attack",
                         "data": {"targetId": target["id"], "targetType": "agent"},
                         "reason": f"COMBAT: Target HP={target.get('hp', '?')}, "
@@ -380,7 +380,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
                     "reason": "EXPLORE: Moving to better position"}
 
     # ── Priority 10: Rest (EP < 4 and safe) ───────────────────────
-    if ep < 4 and not enemies and not region.get("isDeathZone") and region_id not in danger_ids:
+    if ep < 5 and not enemies and not region.get("isDeathZone") and region_id not in danger_ids:
         return {"action": "rest", "data": {},
                 "reason": f"REST: EP={ep}/{max_ep}, area is safe (+1 bonus EP)"}
 
