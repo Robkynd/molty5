@@ -230,12 +230,75 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
             log.error("🚨 IN DEATH ZONE but NO SAFE REGION! All neighbors are DZ!")
 
     # ── Priority 1b: Pre-escape pending death zone ────────────────
-    if region_id in danger_ids:
-        safe = _find_safe_region(connections, danger_ids, view)
-        if safe and ep >= move_ep_cost:
-            log.warning("⚠️ Region %s becoming DZ soon! Escaping to %s", region_id[:8], safe)
-            return {"action": "move", "data": {"regionId": safe},
-                    "reason": "PRE-ESCAPE: Region becoming death zone soon"}
+    # =========================
+# 🚨 ADVANCED ESCAPE SYSTEM
+# =========================
+
+is_current_dz = region.get("isDeathZone", False)
+
+# pastikan current region ikut ke-detect
+if is_current_dz:
+    danger_ids.add(region_id)
+
+# trigger escape kalau:
+# - region udah DZ
+# - atau akan jadi DZ
+if region_id in danger_ids or is_current_dz:
+
+    safe = _find_safe_region(connections, danger_ids, view)
+
+    # =========================
+    # 🟢 CASE 1: ADA JALAN AMAN
+    # =========================
+    if safe:
+        if ep >= move_ep_cost:
+            log.warning(
+                "⚠️ ESCAPE: %s → %s | EP:%s",
+                region_id[:8], safe, ep
+            )
+            return {
+                "action": "move",
+                "data": {"regionId": safe},
+                "reason": "ESCAPE: leaving danger zone"
+            }
+
+        # =========================
+        # 🟡 CASE 2: KURANG EP → PREP
+        # =========================
+        log.warning(
+            "⚠️ LOW EP: %s but need escape → resting",
+            region_id[:8]
+        )
+        return {
+            "action": "rest",
+            "data": {},
+            "reason": "ESCAPE PREP: not enough EP"
+        }
+
+    # =========================
+    # 🔴 CASE 3: GA ADA SAFE PATH
+    # =========================
+    if connections:
+        fallback = _get_region_id(connections[0])
+        log.warning(
+            "⚠️ NO SAFE PATH: forcing move → %s",
+            fallback
+        )
+        return {
+            "action": "move",
+            "data": {"regionId": fallback},
+            "reason": "ESCAPE FALLBACK: random move"
+        }
+
+    # =========================
+    # ☠️ LAST CASE: TERKUNCI
+    # =========================
+    log.error("💀 TRAPPED IN DEATH ZONE")
+    return {
+        "action": "rest",
+        "data": {},
+        "reason": "TRAPPED: no escape route"
+    }
 
     # ── Priority 2: Curse resolution — DISABLED in v1.5.2 ─────────
     # Curse is temporarily disabled. Guardians no longer curse players.
