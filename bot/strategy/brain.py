@@ -388,25 +388,99 @@ if region_id in danger_ids or is_current_dz:
     # ── Priority 6: Favorable agent combat ────────────────────────
     # Be more aggressive when fewer agents remain (late game)
     # Per game-systems.md: avoid combat in storm(-15%) or fog(-10%)
-    hp_threshold = 40 if alive_count > 20 else 25
-    enemies = [a for a in visible_agents
-               if not a.get("isGuardian", False) and a.get("isAlive", True)
-               and a.get("id") != self_data.get("id")]
-    if enemies and ep >= 2 and hp >= hp_threshold:
-        target = _select_weakest(enemies)
-        w_range = get_weapon_range(equipped)
-        if _is_in_range(target, region_id, w_range, connections):
-            my_dmg = calc_damage(atk, get_weapon_bonus(equipped),
-                                target.get("def", 5), region_weather)
-            enemy_dmg = calc_damage(target.get("atk", 10),
-                                     _estimate_enemy_weapon_bonus(target),
-                                     defense, region_weather)
-            # Fight only if we deal more damage or target is low HP
-            if my_dmg * 0.8 > enemy_dmg or target.get("hp", 100) <= my_dmg * 1.52:
-                return {"action": "attack",
-                        "data": {"targetId": target["id"], "targetType": "agent"},
-                        "reason": f"COMBAT: Target HP={target.get('hp', '?')}, "
-                                  f"dmg={my_dmg} vs enemy_dmg={enemy_dmg}"}
+    # =========================
+# 🔥 ADVANCED COMBAT SYSTEM
+# =========================
+
+hp_threshold = 45 if alive_count > 20 else 28
+
+enemies = [
+    a for a in visible_agents
+    if not a.get("isGuardian", False)
+    and a.get("isAlive", True)
+    and a.get("id") != self_data.get("id")
+]
+
+if enemies and ep >= 2:
+
+    enemy_count = len(enemies)
+
+    # =========================
+    # 🎯 PRIORITY TARGET
+    # =========================
+    target = _select_weakest(enemies)
+
+    w_range = get_weapon_range(equipped)
+
+    if _is_in_range(target, region_id, w_range, connections):
+
+        my_dmg = calc_damage(
+            atk,
+            get_weapon_bonus(equipped),
+            target.get("def", 5),
+            region_weather
+        )
+
+        enemy_dmg = calc_damage(
+            target.get("atk", 10),
+            _estimate_enemy_weapon_bonus(target),
+            defense,
+            region_weather
+        )
+
+        target_hp = target.get("hp", 100)
+
+        # =========================
+        # 🧠 SITUATIONAL AWARENESS
+        # =========================
+
+        # 🟢 1. FINISHER MODE (langsung bunuh)
+        if target_hp <= my_dmg * 1.25:
+            return {
+                "action": "attack",
+                "data": {"targetId": target["id"], "targetType": "agent"},
+                "reason": f"EXECUTE: target low HP={target_hp}"
+            }
+
+        # 🔥 2. DOMINANCE MODE (lebih kuat)
+        if my_dmg > enemy_dmg * 1.1 and hp >= hp_threshold:
+            return {
+                "action": "attack",
+                "data": {"targetId": target["id"], "targetType": "agent"},
+                "reason": f"DOMINATE: dmg {my_dmg} > {enemy_dmg}"
+            }
+
+        # ⚠️ 3. AGGRESSIVE TRADE (imbang tapi worth)
+        if (
+            my_dmg > enemy_dmg * 0.9
+            and hp > enemy_dmg * 1.5
+            and enemy_count <= 2
+        ):
+            return {
+                "action": "attack",
+                "data": {"targetId": target["id"], "targetType": "agent"},
+                "reason": f"TRADE: safe aggressive trade vs {enemy_count} enemy"
+            }
+
+        # 🧠 4. SOLO HUNT MODE
+        if enemy_count == 1 and hp > enemy_dmg * 1.2:
+            return {
+                "action": "attack",
+                "data": {"targetId": target["id"], "targetType": "agent"},
+                "reason": "HUNT: isolated target"
+            }
+
+        # =========================
+        # 🛑 ANTI BUNUH DIRI
+        # =========================
+
+        # ❌ keroyokan → jangan fight
+        if enemy_count > 2:
+            return None
+
+        # ❌ kalah damage jauh → jangan fight
+        if enemy_dmg > my_dmg * 1.3:
+            return None
 
     # ── Priority 7: Monster farming ───────────────────────────────
     monsters = [m for m in visible_monsters if m.get("hp", 0) > 0]
