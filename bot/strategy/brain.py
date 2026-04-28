@@ -38,7 +38,7 @@ WEAPONS = {
     "sniper": {"bonus": 28, "range": 2},
 }
 
-WEAPON_PRIORITY = ["katana", "sniper", "sword", "pistol", "dagger", "bow", "fist"]
+WEAPON_PRIORITY = ["sniper", "katana", "sword", "pistol", "dagger", "bow", "fist"]
 
 # ── Item priority for pickup ──────────────────────────────────────────
 # Moltz = ALWAYS pickup (highest). Weapons > healing > utility.
@@ -281,7 +281,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
     # ── Priority 3: Healing management ─────────────────────────────
     # HP < 30 = CRITICAL: use Bandage first (30 HP), then Medkit (50 HP)
     # HP < 70 = MODERATE: use Emergency Food first (20 HP), save better items
-    if hp < 30:
+    if hp < 50:
         heal = _find_healing_item(inventory, critical=True)
         if heal:
             return {"action": "use_item", "data": {"itemId": heal["id"]},
@@ -293,7 +293,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
                     "reason": f"HEAL: HP={hp}, using {heal.get('typeId', 'heal')}"}
 
     # ── Priority 4: EP recovery if cursed (EP=0) or very low ──────
-    if ep == 0:
+    if ep == 2:
         # Check for energy drink first
         energy_drink = _find_energy_drink(inventory)
         if energy_drink:
@@ -356,7 +356,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
                     "reason": f"MONSTER FARM: {target.get('name', 'monster')} HP={target.get('hp', '?')}"}
 
     # ── Priority 7b: Moderate healing (HP < 70, safe area) ────────
-    if hp < 70 and not enemies:
+    if hp < 80 and not enemies:
         heal = _find_healing_item(inventory, critical=(hp < 30))
         if heal:
             return {"action": "use_item", "data": {"itemId": heal["id"]},
