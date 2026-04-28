@@ -247,7 +247,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
     guardians_here = [a for a in visible_agents
                       if a.get("isGuardian", False) and a.get("isAlive", True)
                       and a.get("regionId") == region_id]
-    if guardians_here and hp < 20 and ep >= move_ep_cost:
+    if guardians_here and hp < 40 and ep >= move_ep_cost:
         # Low HP + guardian in same region = flee!
         safe = _find_safe_region(connections, danger_ids, view)
         if safe:
@@ -275,7 +275,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
     # If cooldown active, only free actions allowed
     if not can_act:
         return None
-    
+
     # (Death zone escape already handled above as Priority 1)
 
     # ── Priority 3: Healing management ─────────────────────────────
@@ -316,7 +316,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
                                        _estimate_enemy_weapon_bonus(target),
                                        defense, region_weather)
             # Fight if we deal more damage OR target is low HP (finish off)
-            if my_dmg >= guardian_dmg or target.get("hp", 60) <= my_dmg * 3:
+            if my_dmg >= guardian_dmg or target.get("hp", 100) <= my_dmg * 3:
                 return {"action": "attack",
                         "data": {"targetId": target["id"], "targetType": "agent"},
                         "reason": f"GUARDIAN FARM: HP={target.get('hp','?')} "
@@ -337,17 +337,14 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
                                 target.get("def", 5), region_weather)
             enemy_dmg = calc_damage(target.get("atk", 10),
                                      _estimate_enemy_weapon_bonus(target),
-                                     defense, region_weather
+                                     defense, region_weather)
             # Fight only if we deal more damage or target is low HP
-            if my_dmg * 0.8 > enemy_dmg or target.get("hp", 100) <= my_dmg * 1.82:
+            if my_dmg > enemy_dmg or target.get("hp", 100) <= my_dmg * 2:
                 return {"action": "attack",
                         "data": {"targetId": target["id"], "targetType": "agent"},
                         "reason": f"COMBAT: Target HP={target.get('hp', '?')}, "
                                   f"dmg={my_dmg} vs enemy_dmg={enemy_dmg}"}
 
-    if hp > 70:
-    mode = "AGGRESSIVE"
-    
     # ── Priority 7: Monster farming ───────────────────────────────
     monsters = [m for m in visible_monsters if m.get("hp", 0) > 0]
     if monsters and ep >= 2:
