@@ -275,8 +275,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
     # If cooldown active, only free actions allowed
     if not can_act:
         return None
-    if turn < 10:
-    prioritize = "farm + weapon"
+    
     # (Death zone escape already handled above as Priority 1)
 
     # ── Priority 3: Healing management ─────────────────────────────
