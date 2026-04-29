@@ -17,7 +17,7 @@ DEFAULT_MEMORY = {
             "deathzone": "move inward before turn 5",
             "guardians": "engage immediately — highest sMoltz value",
             "weather": "avoid combat in fog or storm",
-            "ep_management": "rest when EP < 4 before engaging",
+            "ep_management": "rest when EP < 2 before engaging",
         },
         "history": {
             "totalGames": 0,
