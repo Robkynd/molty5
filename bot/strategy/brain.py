@@ -400,7 +400,7 @@ def decide_action(view: dict, can_act: bool, memory_temp: dict = None) -> dict |
                     "reason": "EXPLORE: Moving to better position"}
 
     # ── Priority 10: Rest (EP < 4 and safe) ───────────────────────
-    if ep < 4 and not enemies_here and not region.get("isDeathZone") and region_id not in danger_ids:
+    if ep < 2 and not enemies_here and not region.get("isDeathZone") and region_id not in danger_ids:
         return {"action": "rest", "data": {},
                 "reason": f"REST: EP={ep}/{max_ep}, area is safe (+1 bonus EP)"}
 
