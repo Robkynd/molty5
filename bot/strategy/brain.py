@@ -84,22 +84,6 @@ def calc_damage(atk: int, weapon_bonus: int, target_def: int,
     penalty = WEATHER_COMBAT_PENALTY.get(weather, 0.0)
     return max(1, int(base * (1 - penalty)))
 
-
-def get_weapon_bonus(equipped_weapon) -> int:
-    """Get ATK bonus from equipped weapon."""
-    if not equipped_weapon:
-        return 0
-    type_id = equipped_weapon.get("typeId", "").lower()
-    return WEAPONS.get(type_id, {}).get("bonus", 0)
-
-
-def get_weapon_range(equipped_weapon) -> int:
-    """Get range from equipped weapon."""
-    if not equipped_weapon:
-        return 0
-    type_id = equipped_weapon.get("typeId", "").lower()
-    return WEAPONS.get(type_id, {}).get("range", 0)
-
 _known_agents: dict = {}
 # Map knowledge: track all revealed DZ/pending DZ/safe regions after using Map
 _map_knowledge: dict = {"revealed": False, "death_zones": set(), "safe_center": []}
